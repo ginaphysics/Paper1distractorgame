@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spot the Distractor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: navy exam-board band on top; question stage (left) + group scoreboard (right), stacking on phones. */
+:root{
+  --bg:#eef1f7; --surface:#ffffff; --surface-2:#f5f7fb; --ink:#15213b; --muted:#56627e; --line:#d6dce8;
+  --band:#15213b; --on-band:#ffffff; --on-band-muted:#b9c3da;
+  --hl:#f2b705; --on-hl:#15213b; --trap:#d6336c; --ok:#118a65; --blue:#2c68d6; --violet:#7547cc;
+  --display:"Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1526; --surface:#162038; --surface-2:#1b2743; --ink:#e8ecf6; --muted:#9ba7c3; --line:#2a3756;
+  --band:#0a1020; --on-band:#ffffff; --on-band-muted:#9ba7c3;
+  --hl:#ffcc33; --on-hl:#15213b; --trap:#ff6b97; --ok:#3fd09b; --blue:#6ea3ff; --violet:#ad8cff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1526; --surface:#162038; --surface-2:#1b2743; --ink:#e8ecf6; --muted:#9ba7c3; --line:#2a3756;
+  --band:#0a1020; --on-band:#ffffff; --on-band-muted:#9ba7c3;
+  --hl:#ffcc33; --on-hl:#15213b; --trap:#ff6b97; --ok:#3fd09b; --blue:#6ea3ff; --violet:#ad8cff; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Band */
+.band{background:var(--band);color:var(--on-band)}
+.band-in{max-width:1440px;margin:0 auto;padding-block:18px;display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0;margin-right:auto}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--on-band-muted)}
+h1{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3.2vw,2.4rem);line-height:1.05;text-wrap:balance}
+h1 mark{background:linear-gradient(transparent 52%,var(--hl) 52%,var(--hl) 92%,transparent 92%);color:inherit;padding:0 .08em}
+.band-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tpill{font-family:var(--mono);font-weight:700;font-size:1.05rem;padding:6px 12px;border-radius:999px;border:1px solid #ffffff33;font-variant-numeric:tabular-nums;color:var(--on-band)}
+.tpill.low{background:var(--trap);border-color:transparent}
+.bbtn{background:transparent;border:1px solid #ffffff40;color:var(--on-band);border-radius:10px;padding:8px 14px;font-weight:700}
+.bbtn:hover{background:#ffffff14}
+
+/* Main grid */
+.wrap{max-width:1440px;margin:0 auto;padding-block:20px 40px;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+@media (max-width:980px){.wrap{grid-template-columns:minmax(0,1fr)}}
+
+/* Stage */
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:clamp(16px,2.4vw,32px);display:flex;flex-direction:column;gap:20px;min-width:0}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.step{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);text-align:left;min-width:0}
+.step b{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;background:var(--line);color:var(--ink)}
+.step span{font-weight:700;font-size:.95rem;line-height:1.2;min-width:0}
+.step small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.step[aria-current="step"]{border-color:var(--ink);background:var(--surface)}
+.step[data-p="0"][aria-current="step"] b{background:var(--hl);color:var(--on-hl)}
+.step[data-p="1"][aria-current="step"] b{background:var(--trap);color:#fff}
+.step[data-p="2"][aria-current="step"] b{background:var(--ok);color:#fff}
+@media (max-width:560px){.step small{display:none}.step{padding:8px}}
+
+.qmeta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.qno{font-family:var(--mono);font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.topic{font-size:.85rem;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
+.cue{margin:0;padding:12px 16px;border-radius:10px;font-weight:700;font-size:1.05rem;border-left:5px solid var(--hl);background:color-mix(in srgb,var(--hl) 14%,var(--surface))}
+.cue[data-p="1"]{border-left-color:var(--trap);background:color-mix(in srgb,var(--trap) 10%,var(--surface))}
+.cue[data-p="2"]{border-left-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,var(--surface))}
+.stem{margin:0;font-size:clamp(1.2rem,2.1vw,1.7rem);line-height:1.45;max-width:60ch;text-wrap:pretty}
+.opts{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;align-items:center;padding:12px 16px;border:2px solid var(--line);border-radius:12px;background:var(--surface)}
+.opt .L{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:1.2rem}
+.opt .v{font-size:clamp(1.15rem,1.9vw,1.55rem);font-variant-numeric:tabular-nums}
+.opt .why{grid-column:2;color:var(--muted);font-size:1rem;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.tag{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:2px 8px;border-radius:6px;color:#fff;white-space:nowrap}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--surface))}
+.opt.ok .L{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.ok .tag{background:var(--ok)}
+.opt.trap{border-color:var(--trap);background:color-mix(in srgb,var(--trap) 8%,var(--surface))}
+.opt.trap .L{background:var(--trap);border-color:var(--trap);color:#fff}
+.opt.trap .tag{background:var(--trap)}
+.opt.dis .tag{background:var(--muted)}
+.opt.dis .L{border-color:var(--muted);color:var(--muted)}
+.opt .why .t{color:var(--ink)}
+
+/* Hunt panel */
+.hunt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center;padding:16px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--line)}
+@media (max-width:620px){.hunt{grid-template-columns:minmax(0,1fr);justify-items:center}}
+.ring{position:relative;width:170px;height:170px;max-width:100%}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .trk{fill:none;stroke:var(--line);stroke-width:12}
+.ring .prg{fill:none;stroke:var(--trap);stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:2.4rem;font-variant-numeric:tabular-nums}
+.ring.done .num{color:var(--trap)}
+.board-prompt{display:flex;flex-direction:column;gap:10px;min-width:0}
+.board-prompt h3{margin:0;font-family:var(--display);font-size:1.15rem;text-transform:uppercase;letter-spacing:.04em}
+.board-prompt ol{margin:0;padding-left:1.4em;display:grid;gap:4px;font-size:1.05rem}
+.trow{display:flex;gap:8px;flex-wrap:wrap}
+
+.work{padding:16px 18px;border-radius:12px;border:2px solid var(--ok);background:var(--surface)}
+.work h3{margin:0 0 6px;font-family:var(--mono);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ok)}
+.work p{margin:0;font-size:1.1rem;font-variant-numeric:tabular-nums}
+
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px}
+.btn{border:2px solid var(--ink);background:var(--surface);border-radius:10px;padding:10px 16px;font-weight:700}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--ink);color:var(--surface)}
+.btn.primary:hover{opacity:.9}
+.btn.go{background:var(--trap);border-color:var(--trap);color:#fff}
+.btn.rev{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sm{padding:6px 12px;font-size:.9rem}
+.jump{display:flex;flex-wrap:wrap;gap:6px}
+.jump button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);font-family:var(--mono);font-size:.85rem;font-variant-numeric:tabular-nums}
+.jump button[aria-current="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.jump button.scored{box-shadow:inset 0 -3px 0 var(--hl)}
+
+/* Board */
+.board{display:flex;flex-direction:column;gap:12px;min-width:0}
+.board-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.board-head h2{margin:0;font-family:var(--display);font-size:1.3rem}
+.legend{display:flex;flex-wrap:wrap;gap:6px;font-size:.8rem}
+.legend span{padding:2px 8px;border-radius:6px;font-weight:700;border:1px solid var(--line);background:var(--surface)}
+.groups{display:grid;gap:10px}
+@media (max-width:980px) and (min-width:600px){.groups{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.g{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:10px}
+.g.lead{border-color:var(--hl);box-shadow:0 0 0 2px var(--hl)}
+.g-top{display:flex;align-items:center;gap:10px;min-width:0}
+.g-name{font-weight:700;font-size:1.05rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.g-lead{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;background:var(--hl);color:var(--on-hl);padding:2px 6px;border-radius:5px;font-weight:700}
+.g-score{font-family:var(--mono);font-weight:700;font-size:1.9rem;font-variant-numeric:tabular-nums;line-height:1}
+.chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.chip{border:2px solid var(--line);background:var(--surface-2);border-radius:9px;padding:6px 4px;font-size:.78rem;font-weight:700;line-height:1.15;text-align:center}
+.chip i{display:block;font-style:normal;font-family:var(--mono);font-size:.95rem}
+.chip[data-k="d"][aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip[data-k="j"][aria-pressed="true"]{background:var(--hl);border-color:var(--hl);color:var(--on-hl)}
+.chip[data-k="c"][aria-pressed="true"]{background:var(--violet);border-color:var(--violet);color:#fff}
+.adj{display:flex;gap:6px;align-items:center;font-size:.8rem;color:var(--muted)}
+.adj button{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:2px 9px;font-family:var(--mono);font-size:.82rem}
+.adj .sp{margin-left:auto}
+
+/* Settings */
+.sheet{position:fixed;inset:0;z-index:20;background:color-mix(in srgb,var(--band) 55%,transparent);display:flex;justify-content:flex-end}
+.sheet-in{background:var(--surface);width:min(440px,100%);height:100%;overflow:auto;padding-block:max(20px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-bottom,0px));padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px;border-left:1px solid var(--line)}
+.sheet h2{margin:0;font-family:var(--display);font-size:1.4rem}
+.fs{display:grid;gap:10px}
+.fs>label,.fs .lab{font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper output{font-family:var(--mono);font-size:1.6rem;font-weight:700;min-width:2ch;text-align:center}
+.names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+input[type=text],input[type=number],select{width:100%;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.pts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pts label{display:grid;gap:4px;font-size:.82rem;font-weight:700}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.note{font-size:.85rem;color:var(--muted);margin:0}
+.danger{border-color:var(--trap);color:var(--trap)}
+.danger.arm{background:var(--trap);color:#fff}
+.keys{font-size:.85rem;color:var(--muted);display:grid;gap:4px}
+kbd{font-family:var(--mono);font-size:.78rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--surface-2);color:var(--ink)}
+.foot{font-size:.8rem;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){.ring .prg{transition:none}}
+</style>
+<style>html{color-scheme:light}body{margin:0;font-size:16px}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<header class="band gut">
+  <div class="band-in">
+    <div class="brand">
+      <span class="eyebrow">9702 AS Physics · Paper 1 MCQ</span>
+      <h1>Beat the Examiner: Spot the <mark>Distractor</mark></h1>
+    </div>
+    <div class="band-tools">
+      <span class="tpill" id="tSmall" aria-label="Timer">2:00</span>
+      <button class="bbtn" id="fsBtn" type="button">Full screen</button>
+      <button class="bbtn" id="setBtn" type="button">Settings</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap gut">
+  <section class="stage" aria-live="polite">
+    <nav class="steps" aria-label="Round phase">
+      <button class="step" type="button" data-p="0"><b>1</b><span>Reveal<small>No solving yet</small></span></button>
+      <button class="step" type="button" data-p="1"><b>2</b><span>Distractor hunt<small>Teams find the trap</small></span></button>
+      <button class="step" type="button" data-p="2"><b>3</b><span>Showdown<small>Full breakdown</small></span></button>
+    </nav>
+
+    <div class="qmeta"><span class="qno" id="qno"></span><span class="topic" id="topic"></span></div>
+    <p class="cue" id="cue"></p>
+    <p class="stem" id="stem"></p>
+    <ol class="opts" id="opts"></ol>
+
+    <div class="hunt" id="hunt" hidden>
+      <div class="ring" id="ring">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="52"/><circle class="prg" id="prg" cx="60" cy="60" r="52"/></svg>
+        <div class="num" id="tBig">2:00</div>
+      </div>
+      <div class="board-prompt">
+        <h3>On your whiteboard</h3>
+        <ol>
+          <li>The letter you think is the <strong>distractor</strong>.</li>
+          <li>The <strong>exact mistake</strong> a student makes to get that wrong number.</li>
+        </ol>
+        <div class="trow">
+          <button class="btn sm" id="tToggle" type="button">Pause</button>
+          <button class="btn sm" id="tReset" type="button">Reset timer</button>
+          <button class="btn sm" id="tAdd" type="button">+30 s</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="work" id="work" hidden><h3>Examiner's working</h3><p id="workTxt"></p></div>
+
+    <div class="ctrl">
+      <div class="row">
+        <button class="btn" id="prev" type="button">← Previous</button>
+        <button class="btn primary" id="next" type="button">Next question →</button>
+      </div>
+      <div class="row">
+        <button class="btn go" id="goHunt" type="button">Start the hunt</button>
+        <button class="btn rev" id="goShow" type="button">Reveal breakdown</button>
+      </div>
+    </div>
+    <div class="jump" id="jump" aria-label="Jump to question"></div>
+  </section>
+
+  <aside class="board">
+    <div class="board-head"><h2>Scoreboard</h2><button class="btn sm" id="setBtn2" type="button">Groups &amp; points</button></div>
+    <div class="legend" id="legend"></div>
+    <div class="groups" id="groups"></div>
+    <p class="foot">Tap a chip to award points for the current question. Tap again to take them back. Use −/+ for anything else.</p>
+  </aside>
+</main>
+
+<section class="sheet" id="sheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="row" style="justify-content:space-between"><h2 id="setTitle">Settings</h2><button class="btn sm" id="closeSet" type="button">Done</button></div>
+
+    <div class="fs">
+      <span class="lab">Number of groups</span>
+      <div class="stepper"><button class="btn sm" id="gMinus" type="button">−</button><output id="gCount">4</output><button class="btn sm" id="gPlus" type="button">+</button></div>
+    </div>
+    <div class="fs"><span class="lab">Group names</span><div class="names" id="names"></div></div>
+
+    <div class="fs">
+      <span class="lab">Points</span>
+      <div class="pts">
+        <label for="pD">Distractor found<input type="number" id="pD" min="0" step="5"></label>
+        <label for="pJ">Mistake explained<input type="number" id="pJ" min="0" step="5"></label>
+        <label for="pC">Correct answer<input type="number" id="pC" min="0" step="5"></label>
+      </div>
+      <p class="note">Changing points recalculates every group's total.</p>
+    </div>
+
+    <div class="fs">
+      <label for="tSec">Hunt timer</label>
+      <select id="tSec">
+        <option value="60">1:00</option><option value="90">1:30</option><option value="120">2:00</option>
+        <option value="150">2:30</option><option value="180">3:00</option><option value="240">4:00</option><option value="300">5:00</option>
+      </select>
+    </div>
+
+    <div class="fs">
+      <span class="lab">Question order</span>
+      <div class="row">
+        <button class="btn sm" id="ordIn" type="button">In order</button>
+        <button class="btn sm" id="ordSh" type="button">Shuffle</button>
+      </div>
+    </div>
+
+    <div class="fs">
+      <span class="lab">New class</span>
+      <button class="btn danger" id="resetAll" type="button">Reset all scores</button>
+    </div>
+
+    <div class="fs keys">
+      <span class="lab">Keyboard</span>
+      <span><kbd>←</kbd> <kbd>→</kbd> previous / next question</span>
+      <span><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> reveal, hunt, showdown</span>
+      <span><kbd>Space</kbd> start / pause timer</span>
+    </div>
+    <p class="foot">Questions use g = 9.81 m s⁻², following the 9702 data sheet. Original practice items written in Paper 1 style, not past-paper reproductions.</p>
+  </div>
+</section>
+
+<script>
+const Q=[
+{id:"kin1",topic:"Kinematics",stem:"A car travelling at 72 km h<sup>−1</sup> brakes with uniform deceleration and comes to rest in 4.0 s. What is the magnitude of the deceleration?",
+ opts:["1.4 m s<sup>−2</sup>","5.0 m s<sup>−2</sup>","10 m s<sup>−2</sup>","18 m s<sup>−2</sup>"],ans:1,trap:3,
+ why:["Converted to 20 m s<sup>−1</sup> correctly, then divided by 3.6 a second time.","","Doubled the answer, using a = 2v/t (mixing in s = ½at²) instead of a = Δv/t.","Forgot to convert km h<sup>−1</sup> to m s<sup>−1</sup>: 72 ÷ 4.0 = 18."],
+ work:"72 km h<sup>−1</sup> = 72 × 1000 ÷ 3600 = 20 m s<sup>−1</sup>. a = Δv / t = 20 ÷ 4.0 = 5.0 m s<sup>−2</sup>."},
+{id:"for1",topic:"Forces · resolving",stem:"A block of mass 2.0 kg rests on a smooth slope inclined at 30° to the horizontal. What is the component of the block's weight that acts down the slope?",
+ opts:["4.9 N","9.8 N","17 N","20 N"],ans:1,trap:2,
+ why:["Calculated g sin 30° = 4.9, which is an acceleration. Forgot to multiply by the mass.","","Used cos 30° instead of sin 30°. 17 N is the component perpendicular to the slope.","Gave the whole weight mg without resolving it."],
+ work:"W = mg = 2.0 × 9.81 = 19.6 N. Down-slope component = mg sin θ = 19.6 × sin 30° = 9.8 N."},
+{id:"en1",topic:"Work, energy & power",stem:"A ball is dropped from rest from a height of 5.0 m. Air resistance is negligible. What is its speed just before it hits the ground?",
+ opts:["7.0 m s<sup>−1</sup>","9.9 m s<sup>−1</sup>","49 m s<sup>−1</sup>","98 m s<sup>−1</sup>"],ans:1,trap:0,
+ why:["Wrote mgh = mv² and lost the ½, giving v = √(gh).","","Wrote v = gh, with no square root and no factor of 2.","Found v² = 2gh = 98 and forgot to take the square root."],
+ work:"mgh = ½mv², so v = √(2gh) = √(2 × 9.81 × 5.0) = 9.9 m s<sup>−1</sup>."},
+{id:"def1",topic:"Deformation of solids",stem:"A wire of length 2.0 m and diameter 0.50 mm extends by 1.6 mm when a load of 40 N is applied. What is the Young modulus of the material?",
+ opts:["1.6 × 10<sup>5</sup> Pa","2.5 × 10<sup>8</sup> Pa","6.4 × 10<sup>10</sup> Pa","2.5 × 10<sup>11</sup> Pa"],ans:3,trap:2,
+ why:["Inverted the strain, using L/x instead of x/L.","Left the extension in mm, so strain = 1.6 ÷ 2.0 = 0.80.","Used the diameter as the radius in A = πr². The area is 4× too big, so E is 4× too small.",""],
+ work:"r = 0.25 mm, A = π(0.25 × 10<sup>−3</sup>)² = 1.96 × 10<sup>−7</sup> m². Stress = 40 ÷ 1.96 × 10<sup>−7</sup> = 2.04 × 10<sup>8</sup> Pa. Strain = 1.6 × 10<sup>−3</sup> ÷ 2.0 = 8.0 × 10<sup>−4</sup>. E = stress ÷ strain = 2.5 × 10<sup>11</sup> Pa."},
+{id:"sup1",topic:"Superposition · double slit",stem:"In a double-slit experiment the slit separation is 0.50 mm and the screen is 2.0 m from the slits. The fringe separation is 2.4 mm. What is the wavelength of the light?",
+ opts:["2.4 × 10<sup>−6</sup> m","6.0 × 10<sup>−7</sup> m","6.0 × 10<sup>−4</sup> m","9.6 m"],ans:1,trap:2,
+ why:["Multiplied by D instead of dividing: λ = axD.","","Converted x to metres but left a in millimetres.","Rearranged upside down: λ = xD/a."],
+ work:"λ = ax / D = (0.50 × 10<sup>−3</sup>)(2.4 × 10<sup>−3</sup>) ÷ 2.0 = 6.0 × 10<sup>−7</sup> m."},
+{id:"ele1",topic:"Electricity · resistivity",stem:"A wire of length 1.5 m and cross-sectional area 0.20 mm² has a resistance of 3.0 Ω. What is the resistivity of the metal?",
+ opts:["4.0 × 10<sup>−7</sup> Ω m","4.0 × 10<sup>−4</sup> Ω m","0.40 Ω m","2.3 × 10<sup>7</sup> Ω m"],ans:0,trap:1,
+ why:["","Converted mm² with 10<sup>−3</sup> instead of 10<sup>−6</sup>. 1 mm² = 10<sup>−6</sup> m².","Did not convert the area at all.","Rearranged as ρ = RL/A."],
+ work:"A = 0.20 mm² = 0.20 × 10<sup>−6</sup> m². ρ = RA / L = 3.0 × 0.20 × 10<sup>−6</sup> ÷ 1.5 = 4.0 × 10<sup>−7</sup> Ω m."},
+{id:"dc1",topic:"D.C. circuits · potential divider",stem:"A 12 V supply of negligible internal resistance is connected across a 2.0 kΩ resistor and a 4.0 kΩ resistor in series. A voltmeter of very high resistance is connected across the 4.0 kΩ resistor. What is the voltmeter reading?",
+ opts:["4.0 V","6.0 V","8.0 V","24 V"],ans:2,trap:0,
+ why:["Found the p.d. across the 2.0 kΩ resistor instead.","Assumed the p.d. splits equally between the two resistors.","","Used V × R₂/R₁ instead of V × R₂/(R₁ + R₂)."],
+ work:"V = 12 × 4.0 ÷ (2.0 + 4.0) = 8.0 V."},
+{id:"dc2",topic:"D.C. circuits · combining resistors",stem:"Two 6.0 Ω resistors are connected in parallel. This combination is connected in series with a third 6.0 Ω resistor. What is the total resistance?",
+ opts:["2.0 Ω","6.3 Ω","9.0 Ω","18 Ω"],ans:2,trap:1,
+ why:["Treated all three resistors as parallel.","Found 1/R = 1/6 + 1/6 = 0.33, forgot to take the reciprocal, then added 6.","","Treated all three resistors as series."],
+ work:"Parallel pair: 1/R = 1/6.0 + 1/6.0, so R = 3.0 Ω. Total = 3.0 + 6.0 = 9.0 Ω."},
+{id:"en2",topic:"Work, energy & power · efficiency",stem:"An electric motor lifts a 50 kg load vertically through 6.0 m in 12 s. The electrical power input to the motor is 400 W. What is the efficiency of the motor?",
+ opts:["6.3 %","39 %","61 %","160 %"],ans:2,trap:0,
+ why:["Used mass instead of weight (forgot g), giving 25 W useful power.","Calculated the wasted fraction, 1 − efficiency.","","Inverted the ratio (input ÷ output). Efficiency cannot exceed 100 %."],
+ work:"Useful power = mgh / t = 50 × 9.81 × 6.0 ÷ 12 = 245 W. Efficiency = 245 ÷ 400 = 0.61 = 61 %."},
+{id:"unc1",topic:"Measurement · uncertainties",stem:"The acceleration of free fall is found using g = 4π²l / T². The length l has an uncertainty of 1 % and the period T has an uncertainty of 2 %. What is the percentage uncertainty in g?",
+ opts:["3 %","4 %","5 %","6 %"],ans:2,trap:0,
+ why:["Added 1 % + 2 % but forgot that T is squared.","Counted only the T term (2 × 2 %) and ignored l.","","Doubled both terms, as if l were also squared."],
+ work:"%g = %l + 2 × %T = 1 % + 2 × 2 % = 5 %. 4π² is exact, so it adds no uncertainty."},
+{id:"kin2",topic:"Kinematics · projectiles",stem:"A ball is thrown horizontally at 15 m s<sup>−1</sup> from the top of a cliff 20 m high. Air resistance is negligible. How far from the base of the cliff does the ball land?",
+ opts:["21 m","30 m","50 m","61 m"],ans:1,trap:3,
+ why:["Used t = √(h/g), dropping the 2 from s = ½gt².","","Multiplied the time by the resultant landing speed (25 m s<sup>−1</sup>) instead of the horizontal speed.","Found t² = 2h/g = 4.1 and used it as t, forgetting the square root."],
+ work:"Vertical: 20 = ½ × 9.81 × t², so t = 2.02 s. Horizontal: x = 15 × 2.02 = 30 m."},
+{id:"par1",topic:"Particle physics",stem:"During β<sup>+</sup> decay, a proton in a nucleus changes into a neutron. Which quark change takes place?",
+ opts:["up → down","down → up","up → strange","down → strange"],ans:0,trap:1,
+ why:["","This is β<sup>−</sup> decay (neutron → proton): udd → uud.","Protons and neutrons contain no strange quarks, and β decay does not create one here.","Protons and neutrons contain only up and down quarks."],
+ work:"Proton = uud, neutron = udd. One up quark becomes a down quark: u → d + e<sup>+</sup> + ν<sub>e</sub>."},
+{id:"wav1",topic:"Waves · Doppler effect",stem:"A source emitting sound of frequency 500 Hz moves directly towards a stationary observer at 30 m s<sup>−1</sup>. The speed of sound is 330 m s<sup>−1</sup>. What frequency does the observer hear?",
+ opts:["458 Hz","530 Hz","545 Hz","550 Hz"],ans:3,trap:0,
+ why:["Used v + v<sub>s</sub> in the denominator, which is for a source moving away.","Added 30 to the frequency, mixing up a speed with a frequency.","Used the moving-observer form f(v + v<sub>s</sub>)/v.",""],
+ work:"f<sub>o</sub> = f v / (v − v<sub>s</sub>) = 500 × 330 ÷ (330 − 30) = 550 Hz."},
+{id:"fld1",topic:"Electric fields",stem:"Two parallel plates 5.0 mm apart have a potential difference of 2000 V between them. What is the magnitude of the force on an electron between the plates?",
+ opts:["1.6 × 10<sup>−18</sup> N","6.4 × 10<sup>−17</sup> N","3.2 × 10<sup>−16</sup> N","6.4 × 10<sup>−14</sup> N"],ans:3,trap:1,
+ why:["Multiplied by d instead of dividing: F = qVd.","Left d in millimetres: E = 2000 ÷ 5.0 = 400 V m<sup>−1</sup>.","Used F = qV, which is an energy in joules, not a force.",""],
+ work:"E = V / d = 2000 ÷ 5.0 × 10<sup>−3</sup> = 4.0 × 10<sup>5</sup> V m<sup>−1</sup>. F = eE = 1.6 × 10<sup>−19</sup> × 4.0 × 10<sup>5</sup> = 6.4 × 10<sup>−14</sup> N."},
+{id:"dc3",topic:"D.C. circuits · e.m.f. & internal resistance",stem:"A battery of e.m.f. 6.0 V and internal resistance 1.0 Ω is connected to a 5.0 Ω resistor. What is the potential difference across the terminals of the battery?",
+ opts:["1.0 V","4.8 V","5.0 V","6.0 V"],ans:2,trap:3,
+ why:["Gave the lost volts Ir instead of the terminal p.d.","Found the current as 6.0 ÷ 5.0 = 1.2 A, leaving r out of the total resistance.","","Ignored the internal resistance and gave the e.m.f."],
+ work:"I = E / (R + r) = 6.0 ÷ 6.0 = 1.0 A. V = E − Ir = 6.0 − 1.0 × 1.0 = 5.0 V."}
+];
+
+const KEY="spot-distractor-9702.v1";
+const $=s=>document.querySelector(s);
+const L="ABCD";
+function fresh(){return {n:4,names:[],pts:{d:50,j:100,c:20},timer:120,order:null,qi:0,phase:0,awards:{},adj:[]}}
+function fix(s){
+  s.names=s.names||[];s.adj=s.adj||[];
+  for(let i=0;i<12;i++){if(!s.names[i])s.names[i]="Group "+(i+1);if(typeof s.adj[i]!=="number")s.adj[i]=0;}
+  if(!Array.isArray(s.order)||s.order.length!==Q.length)s.order=Q.map((_,i)=>i);
+  if(!(s.qi>=0&&s.qi<Q.length))s.qi=0;
+  s.n=Math.min(12,Math.max(1,s.n|0||4));s.awards=s.awards||{};s.pts=Object.assign({d:50,j:100,c:20},s.pts||{});
+  s.phase=[0,1,2].includes(s.phase)?s.phase:0;return s;
+}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&typeof s==="object")return fix(s);}catch(e){}return fix(fresh());}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+let S=load();
+
+const cur=()=>Q[S.order[S.qi]];
+function score(g){let t=S.adj[g];for(const id in S.awards){const a=S.awards[id][g];if(a){if(a.d)t+=+S.pts.d||0;if(a.j)t+=+S.pts.j||0;if(a.c)t+=+S.pts.c||0;}}return t;}
+
+const CUE=["Just look. Don't solve it yet.","Find the trap option, not the right answer. Boards up when the timer ends.","Boards up. Here is the examiner's full breakdown."];
+
+function renderStage(){
+  const q=cur();
+  $("#qno").textContent=`Paper 1 · Question ${S.qi+1} of ${Q.length}`;
+  $("#topic").textContent=q.topic;
+  const cue=$("#cue");cue.textContent=CUE[S.phase];cue.dataset.p=S.phase;
+  $("#stem").innerHTML=q.stem;
+  document.querySelectorAll(".step").forEach(b=>b.toggleAttribute("aria-current",false)||(+b.dataset.p===S.phase&&b.setAttribute("aria-current","step")));
+  const show=S.phase===2;
+  $("#opts").innerHTML=q.opts.map((o,i)=>{
+    let cls="",extra="";
+    if(show){
+      if(i===q.ans){cls="ok";extra=`<div class="why"><span class="tag">Correct answer</span><span class="t">See the working below.</span></div>`;}
+      else{cls=i===q.trap?"trap":"dis";extra=`<div class="why"><span class="tag">${i===q.trap?"Examiner's trap":"Distractor"}</span><span class="t">${q.why[i]}</span></div>`;}
+    }
+    return `<li class="opt ${cls}"><span class="L">${L[i]}</span><span class="v">${o}</span>${extra}</li>`;
+  }).join("");
+  $("#hunt").hidden=S.phase!==1;
+  $("#work").hidden=!show;$("#workTxt").innerHTML=q.work;
+  $("#prev").disabled=S.qi===0;$("#next").disabled=S.qi===Q.length-1;
+  $("#goHunt").hidden=S.phase!==0;$("#goShow").hidden=S.phase!==1;
+  $("#jump").innerHTML=S.order.map((qi,i)=>{
+    const a=S.awards[Q[qi].id];const sc=a&&Object.values(a).some(x=>x&&(x.d||x.j||x.c));
+    return `<button type="button" data-i="${i}" aria-current="${i===S.qi}" class="${sc?"scored":""}" aria-label="Question ${i+1}">${i+1}</button>`;}).join("");
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function renderBoard(){
+  const id=cur().id,aw=S.awards[id]||{};
+  const scores=[...Array(S.n)].map((_,g)=>score(g));const top=Math.max(...scores);
+  $("#legend").innerHTML=`<span>Distractor +${S.pts.d}</span><span>Mistake explained +${S.pts.j}</span><span>Correct +${S.pts.c}</span>`;
+  $("#groups").innerHTML=scores.map((sc,g)=>{
+    const a=aw[g]||{};const lead=top>0&&sc===top;
+    return `<div class="g ${lead?"lead":""}">
+      <div class="g-top"><span class="g-name">${esc(S.names[g])}</span>${lead?'<span class="g-lead">Leading</span>':""}<span class="g-score">${sc}</span></div>
+      <div class="chips">
+        <button type="button" class="chip" data-g="${g}" data-k="d" aria-pressed="${!!a.d}">Distractor<i>+${S.pts.d}</i></button>
+        <button type="button" class="chip" data-g="${g}" data-k="j" aria-pressed="${!!a.j}">Mistake<i>+${S.pts.j}</i></button>
+        <button type="button" class="chip" data-g="${g}" data-k="c" aria-pressed="${!!a.c}">Correct<i>+${S.pts.c}</i></button>
+      </div>
+      <div class="adj"><span>Adjust</span><button type="button" data-g="${g}" data-a="-10">−10</button><button type="button" data-g="${g}" data-a="-5">−5</button><button type="button" data-g="${g}" data-a="5">+5</button><button type="button" data-g="${g}" data-a="10">+10</button></div>
+    </div>`;}).join("");
+}
+
+function renderSettings(){
+  $("#gCount").textContent=S.n;
+  $("#names").innerHTML=[...Array(S.n)].map((_,g)=>`<input type="text" id="nm${g}" data-g="${g}" value="${esc(S.names[g])}" aria-label="Name of group ${g+1}" maxlength="24">`).join("");
+  $("#pD").value=S.pts.d;$("#pJ").value=S.pts.j;$("#pC").value=S.pts.c;$("#tSec").value=String(S.timer);
+}
+function all(){renderStage();renderBoard();save();}
+
+/* Timer */
+const C=2*Math.PI*52;const prg=$("#prg");prg.style.strokeDasharray=C;
+const T={left:S.timer,run:false,id:null,ctx:null};
+function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function drawT(){
+  $("#tBig").textContent=fmt(T.left);
+  const sm=$("#tSmall");sm.textContent=fmt(T.left);sm.classList.toggle("low",T.left<=15&&(T.run||T.left===0));
+  prg.style.strokeDashoffset=C*(1-T.left/Math.max(T.left,S.timer));
+  $("#ring").classList.toggle("done",T.left===0);
+  $("#tToggle").textContent=T.run?"Pause":(T.left===0?"Restart":"Start");
+}
+function beep(){if(!T.ctx)return;try{const t0=T.ctx.currentTime;[0,.25,.5].forEach((d,i)=>{const o=T.ctx.createOscillator(),g=T.ctx.createGain();o.frequency.value=i===2?988:740;g.gain.setValueAtTime(.0001,t0+d);g.gain.exponentialRampToValueAtTime(.3,t0+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+d+.2);o.connect(g).connect(T.ctx.destination);o.start(t0+d);o.stop(t0+d+.22);});}catch(e){}}
+function tick(){T.left=Math.max(0,T.left-1);if(T.left===0){stopT();beep();}drawT();}
+function startT(){if(T.left<=0)T.left=S.timer;if(!T.ctx){try{T.ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}else{try{T.ctx.resume();}catch(e){}}clearInterval(T.id);T.run=true;T.id=setInterval(tick,1000);drawT();}
+function stopT(){T.run=false;clearInterval(T.id);drawT();}
+function resetT(){stopT();T.left=S.timer;drawT();}
+function toggleT(){T.run?stopT():startT();}
+
+/* Navigation */
+function setPhase(p){S.phase=p;if(p===1){resetT();startT();}if(p===2)stopT();all();}
+function goQ(i){if(i<0||i>=Q.length)return;S.qi=i;S.phase=0;resetT();all();}
+
+document.querySelectorAll(".step").forEach(b=>b.addEventListener("click",()=>setPhase(+b.dataset.p)));
+$("#goHunt").onclick=()=>setPhase(1);$("#goShow").onclick=()=>setPhase(2);
+$("#prev").onclick=()=>goQ(S.qi-1);$("#next").onclick=()=>goQ(S.qi+1);
+$("#jump").addEventListener("click",e=>{const b=e.target.closest("button[data-i]");if(b)goQ(+b.dataset.i);});
+$("#tToggle").onclick=toggleT;$("#tReset").onclick=resetT;$("#tAdd").onclick=()=>{T.left+=30;drawT();};
+
+$("#groups").addEventListener("click",e=>{
+  const c=e.target.closest(".chip");
+  if(c){const id=cur().id,g=+c.dataset.g,k=c.dataset.k;S.awards[id]=S.awards[id]||{};const a=S.awards[id][g]=S.awards[id][g]||{};a[k]=!a[k];all();return;}
+  const b=e.target.closest("button[data-a]");
+  if(b){S.adj[+b.dataset.g]+=+b.dataset.a;all();}
+});
+
+/* Settings */
+const sheet=$("#sheet");
+function openSet(){renderSettings();sheet.hidden=false;$("#closeSet").focus();}
+function closeSet(){sheet.hidden=true;}
+$("#setBtn").onclick=openSet;$("#setBtn2").onclick=openSet;$("#closeSet").onclick=closeSet;
+sheet.addEventListener("click",e=>{if(e.target===sheet)closeSet();});
+$("#gMinus").onclick=()=>{S.n=Math.max(1,S.n-1);renderSettings();all();};
+$("#gPlus").onclick=()=>{S.n=Math.min(12,S.n+1);renderSettings();all();};
+$("#names").addEventListener("input",e=>{const g=+e.target.dataset.g;S.names[g]=e.target.value.trim()||("Group "+(g+1));renderBoard();save();});
+[["pD","d"],["pJ","j"],["pC","c"]].forEach(([id,k])=>$("#"+id).addEventListener("input",e=>{const v=parseInt(e.target.value,10);S.pts[k]=isNaN(v)?0:Math.max(0,v);all();}));
+$("#tSec").onchange=e=>{S.timer=+e.target.value;resetT();save();};
+$("#ordIn").onclick=()=>{S.order=Q.map((_,i)=>i);S.qi=0;S.phase=0;resetT();all();closeSet();};
+$("#ordSh").onclick=()=>{const o=Q.map((_,i)=>i);for(let i=o.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[o[i],o[j]]=[o[j],o[i]];}S.order=o;S.qi=0;S.phase=0;resetT();all();closeSet();};
+let armT=null;
+$("#resetAll").onclick=e=>{const b=e.currentTarget;
+  if(!b.classList.contains("arm")){b.classList.add("arm");b.textContent="Tap again to clear every score";clearTimeout(armT);armT=setTimeout(()=>{b.classList.remove("arm");b.textContent="Reset all scores";},3500);return;}
+  clearTimeout(armT);S.awards={};S.adj=S.adj.map(()=>0);S.qi=0;S.phase=0;resetT();all();b.classList.remove("arm");b.textContent="Scores cleared";setTimeout(()=>b.textContent="Reset all scores",1800);
+};
+
+$("#fsBtn").onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch(e){$("#fsBtn").textContent="Full screen unavailable";}};
+
+document.addEventListener("keydown",e=>{
+  if(e.target.matches("input,select,textarea"))return;
+  if(e.key==="Escape"&&!sheet.hidden){closeSet();return;}
+  if(!sheet.hidden)return;
+  if(e.key==="ArrowRight")goQ(S.qi+1);
+  else if(e.key==="ArrowLeft")goQ(S.qi-1);
+  else if(e.key==="1")setPhase(0);else if(e.key==="2")setPhase(1);else if(e.key==="3")setPhase(2);
+  else if(e.key===" "&&!e.target.matches("button")){e.preventDefault();toggleT();}
+});
+
+if(S.phase===1)S.phase=0;
+drawT();all();
+</script>
+</body>
+</html>
